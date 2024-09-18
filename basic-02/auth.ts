@@ -4,14 +4,15 @@ import GithubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
 import FacebookProvider from "next-auth/providers/facebook";
 import Credentials from "@auth/core/providers/credentials";
-
-// import { JWT } from "next-auth/jwt";
-// import { Account, Profile, User } from "next-auth";
 import { Adapter } from "next-auth/adapters";
-import clientPromise from "@/lib/db";
+import { signInSchema } from "./src/lib/zod";
+import clientPromise from "./src/lib/db";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: MongoDBAdapter(clientPromise) as Adapter,
+  pages: {
+    signIn: "/auth",
+  },
   providers: [
     Credentials({
       credentials: {
@@ -26,11 +27,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         let user = null;
 
         // validate credentials
-        // const parsedCredentials = signInSchema.safeParse(credentials);
-        // if (!parsedCredentials.success) {
-        //   console.error("Invalid credentials:", parsedCredentials.error.errors);
-        //   return null;
-        // }
+        const parsedCredentials = signInSchema.safeParse(credentials);
+        if (!parsedCredentials.success) {
+          console.error("Invalid credentials:", parsedCredentials.error.errors);
+          return null;
+        }
+
         // get user
         if (!credentials) {
           return null;
@@ -64,6 +66,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       clientSecret: process.env.FACEBOOK_SECRET as string,
     }),
   ],
+  callbacks: {
+    authorized({ request: { nextUrl }, auth }) {
+      const isLoggedIn = !!auth?.user;
+      const { pathname } = nextUrl;
+      const role = auth?.user.role || "user";
+      if (pathname.startsWith("/") && isLoggedIn) {
+        return Response.redirect(new URL("/protected", nextUrl));
+      }
+      if (pathname.startsWith("/page2") && role !== "admin") {
+        return Response.redirect(new URL("/", nextUrl));
+      }
+      return !!auth;
+    },
+  },
 });
 
 // export const authOptions: AuthOptions = {

@@ -1,7 +1,11 @@
-export default function Protected() {
+import AuthScreen from "@/components/auth/auth-screen";
+
+export default function Auth() {
   return (
-    <div>
-      <p>Protected</p>
+    <div className="flex h-screen bg-[#5C3B58]">
+      <div className="m-auto">
+        <AuthScreen />
+      </div>
     </div>
   );
 }

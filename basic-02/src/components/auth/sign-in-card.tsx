@@ -9,11 +9,26 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { SignInFlow } from "./types";
-import { useEffect, useState } from "react";
-import { signIn, useSession } from "next-auth/react";
+import { useState } from "react";
+import { signIn } from "next-auth/react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { signInSchema } from "@/lib/zod";
+import LoadingButton from "./loading-button";
+import { handleCredentialsSignin } from "@/app/actions/authActions";
+import ErrorMessage from "./auth-error";
 
 interface SignInCardProps {
   setState: (state: SignInFlow) => void;
@@ -25,15 +40,32 @@ const signInFunc = async (provider: string) => {
 };
 
 const SignInCard = ({ setState }: SignInCardProps) => {
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
+  const [errorMessage, setErrorMessage] = useState<string>("");
 
-  const { data: session, status } = useSession();
+  //const { data: session, status } = useSession();
 
-  useEffect(() => {
-    console.log("Session:", session);
-    console.log("Status:", status);
-  }, [session, status]);
+  const form = useForm<z.infer<typeof signInSchema>>({
+    resolver: zodResolver(signInSchema),
+    defaultValues: {
+      email: "",
+      password: "'",
+    },
+  });
+
+  const onSubmit = async (values: z.infer<typeof signInSchema>) => {
+    try {
+      console.log(values);
+      const result = await handleCredentialsSignin({
+        ...values,
+        redirectUrl: "/protected",
+      });
+      if (result?.message) {
+        setErrorMessage(result.message);
+      }
+    } catch (error) {
+      console.log("An unexpected error occurred. Please try again.");
+    }
+  };
 
   return (
     <Card className="w-full h-full p-8">
@@ -44,31 +76,48 @@ const SignInCard = ({ setState }: SignInCardProps) => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5 px-0 pb-0">
-        <form className="space-y-2.5">
-          <Input
-            disabled={false}
-            placeholder="Email"
-            value={email}
-            onChange={(e) => {
-              setEmail(e.target.value);
-            }}
-            type="email"
-            required
-          />
-          <Input
-            disabled={false}
-            placeholder="Password"
-            value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-            }}
-            type="password"
-            required
-          />
-          <Button type="submit" disabled={false} className="w-full" size={"lg"}>
-            Continue
-          </Button>
-        </form>
+        <Form {...form}>
+          <form className="space-y-2.5" onSubmit={form.handleSubmit(onSubmit)}>
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="email"
+                      placeholder="Enter your email address"
+                      autoComplete="off"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Password</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="password"
+                      placeholder="Enter password"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <LoadingButton pending={form.formState.isSubmitting} />
+          </form>
+          <ErrorMessage error={errorMessage} />
+        </Form>
         <Separator />
         <div className="flex flex-col gap-y-2.5">
           <Button
