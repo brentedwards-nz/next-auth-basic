@@ -22,9 +22,15 @@ export const signInWithCreds = async (
   password: string,
   redirect: boolean = false
 ) => {
-  await signIn("credentials", {
-    email,
-    password,
-    redirect,
-  });
+  try {
+    await signIn("credentials", {
+      email,
+      password,
+      redirect,
+    });
+  } catch (error) {
+    return {
+      error: "Sign in error",
+    };
+  }
 };

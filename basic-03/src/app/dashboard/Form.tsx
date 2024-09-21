@@ -21,6 +21,7 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { reloadSession } from "@/lib/funcs";
 import { useRouter } from "next/navigation";
+import SignOut from "@/components/SignOutButton";
 
 const formSchema = z.object({
   email: z
@@ -58,14 +59,13 @@ const DashboardForm = ({ email }: { email: string }) => {
       return;
     }
 
-
     update({
-        ...session,
-        user: {
-            ...session?.user,
-            email: values.email
-        }
-    })
+      ...session,
+      user: {
+        ...session?.user,
+        email: values.email,
+      },
+    });
 
     reloadSession();
     router.refresh();
@@ -74,28 +74,31 @@ const DashboardForm = ({ email }: { email: string }) => {
   }
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <h1 className="text-xl font-semibold">Modify your email</h1>
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input placeholder="johndoe@whatever.com" {...field} />
-              </FormControl>
-              <FormDescription>
-                This is your email used to sign in to our app.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button type="submit">Change email</Button>
-      </form>
-    </Form>
+    <>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          <h1 className="text-xl font-semibold">Modify your email</h1>
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input placeholder="johndoe@whatever.com" {...field} />
+                </FormControl>
+                <FormDescription>
+                  This is your email used to sign in to our app.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <Button type="submit">Change email</Button>
+        </form>
+      </Form>
+      <SignOut />
+    </>
   );
 };
 

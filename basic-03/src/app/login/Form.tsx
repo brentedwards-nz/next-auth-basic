@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -18,8 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import Link from "next/link";
-import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Label } from "@/components/ui/label";
 import {
@@ -28,6 +26,7 @@ import {
   signInWithGoogle,
   signinWithFacebook,
 } from "../../utils/authActions";
+import LoginError from "./LoginError";
 
 const formSchema = z.object({
   email: z
@@ -45,14 +44,16 @@ const formSchema = z.object({
 });
 
 const LoginForm = () => {
+  const searchParams = useSearchParams();
+  const loginError = searchParams.get("error");
+  const router = useRouter();
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {},
   });
 
-  const router = useRouter();
-
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
     const response = (await signInWithCreds(
       values.email,
       values.password
@@ -66,11 +67,9 @@ const LoginForm = () => {
     }
 
     if (!response?.error) {
-      router.push("/dashboard");
+      router.push("/manager");
     }
-
-    toast.success("You are now signed in!");
-  }
+  };
 
   return (
     <Form {...form}>
@@ -163,6 +162,7 @@ const LoginForm = () => {
                   Login with Facebook
                 </Button>
               </div>
+              <LoginError error={loginError} />
               <div className="mt-4 text-center text-sm">
                 Don&apos;t have an account?{" "}
                 <Link href="/register" className="underline">
