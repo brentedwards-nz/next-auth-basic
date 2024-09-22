@@ -25,7 +25,7 @@ import {
   signinWithGitHub,
   signInWithGoogle,
   signinWithFacebook,
-} from "../../utils/authActions";
+} from "@/utils/authActions";
 import LoginError from "./LoginError";
 
 const formSchema = z.object({

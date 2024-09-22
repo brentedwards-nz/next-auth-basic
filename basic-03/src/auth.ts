@@ -1,4 +1,4 @@
-import NextAuth from "next-auth";
+import NextAuth, { NextAuthConfig } from "next-auth";
 import GithubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
 import FacebookProvider from "next-auth/providers/facebook";
@@ -8,7 +8,7 @@ import { MongoDBAdapter } from "@auth/mongodb-adapter";
 import { User } from "next-auth";
 import { cookies } from "next/headers";
 
-export const { auth, handlers, signIn, signOut } = NextAuth({
+export const authConfig: NextAuthConfig = {
   pages: {
     error: "/auth/error",
     signIn: "/login",
@@ -73,16 +73,29 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
   adapter: MongoDBAdapter(clientPromise),
   callbacks: {
     signIn: async ({ user, account, profile, email, credentials }) => {
+      // console.log("signin::account: ", account);
+      // console.log("signin::profile: ", profile);
       if (user) {
         return true;
       }
       return "/auth/error?error=SignInFailed";
     },
+    session: async ({ session, token }) => {
+      // console.log("session::session: ", session);
+      // console.log("session::token: ", token);
+      return session;
+    },
     jwt: async ({ user, token, trigger, session }) => {
+      // console.log("jwt::token: ", token);
+      // console.log("jwt::session: ", session);
+      // console.log("jwt::user: ", user);
+
       if (trigger === "update") {
         return { ...token, ...session.user };
       }
       return { ...token, ...user };
     },
   },
-});
+};
+
+export const { auth, handlers, signIn, signOut } = NextAuth(authConfig);
