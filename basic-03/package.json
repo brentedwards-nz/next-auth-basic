@@ -21,6 +21,7 @@
     "bcrypt-ts": "^5.0.2",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
+    "jose": "^5.9.3",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.378.0",
     "mongodb": "^6.6.0",

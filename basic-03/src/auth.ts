@@ -5,8 +5,7 @@ import FacebookProvider from "next-auth/providers/facebook";
 import Credentials from "next-auth/providers/credentials";
 import clientPromise from "./lib/MongodbClient";
 import { MongoDBAdapter } from "@auth/mongodb-adapter";
-import { User } from "next-auth";
-import { cookies } from "next/headers";
+import { SignJOSE } from "./utils/tokens";
 
 export const authConfig: NextAuthConfig = {
   pages: {
@@ -73,29 +72,43 @@ export const authConfig: NextAuthConfig = {
   adapter: MongoDBAdapter(clientPromise),
   callbacks: {
     signIn: async ({ user, account, profile, email, credentials }) => {
-      // console.log("signin::account: ", account);
-      // console.log("signin::profile: ", profile);
       if (user) {
+        if (account?.provider === "google") {
+        } else if (account?.provider === "github") {
+        } else if (account?.provider === "facebook") {
+        } else if (account?.provider === "credentials") {
+        }
+
         return true;
       }
       return "/auth/error?error=SignInFailed";
     },
-    session: async ({ session, token }) => {
-      // console.log("session::session: ", session);
-      // console.log("session::token: ", token);
-      return session;
-    },
-    jwt: async ({ user, token, trigger, session }) => {
-      // console.log("jwt::token: ", token);
-      // console.log("jwt::session: ", session);
-      // console.log("jwt::user: ", user);
-
-      if (trigger === "update") {
-        return { ...token, ...session.user };
-      }
+    jwt: async ({ token, account, user }) => {
       return { ...token, ...user };
+    },
+    session: async ({ token, session }) => {
+      session.user.id = token?.sub || "";
+      session.user.access_token = await SignJOSE(
+        {
+          id: token?.id as string,
+          data1: "session access data1",
+          data2: "session access data2",
+        },
+        "1h"
+      );
+      session.user.refresh_token = await SignJOSE(
+        {
+          id: token?.id as string,
+          data1: "session refresh data1",
+          data2: "sessionrefresh data2",
+        },
+        "1h"
+      );
+      return session;
     },
   },
 };
 
 export const { auth, handlers, signIn, signOut } = NextAuth(authConfig);
+
+//export { handlers as GET, handlers as POST };

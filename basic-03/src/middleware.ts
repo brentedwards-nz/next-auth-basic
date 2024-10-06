@@ -1,119 +1,63 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { authConfig } from "./auth";
+import getServerSession from "next-auth";
+import { Payload, VerifyJOSE } from "./utils/tokens";
 
-export function middleware(req: NextRequest) {
-  //console.log(`*** middleware:`);
+const checkAPIAuthorization = async (authHeader: string) => {
+  console.log("*** checkAPIAuthorization 1");
+  const jwtToken = authHeader.split("Bearer").at(1) || "";
+  if (jwtToken?.length === 0) {
+    return "Error no access token";
+  }
+
+  try {
+    console.log("*** checkAPIAuthorization 2");
+    const payload = await VerifyJOSE(jwtToken)
+      .then((value) => {
+        console.log("*** checkAPIAuthorization 3");
+        return value;
+      })
+      .catch((error) => {
+        console.log("*** checkAPIAuthorization 4");
+        return "Error verifying token";
+      });
+
+    console.log("*** checkAPIAuthorization 5", payload);
+    return true;
+    //return payload;
+  } catch (error: any) {
+    if ("message" in error) {
+      console.log("*** checkAPIAuthorization 6");
+      return error.message;
+    }
+    console.log("*** checkAPIAuthorization 7");
+    return "Error checking API authorization token";
+  }
+};
+
+export async function middleware(req: NextRequest) {
+  if (req.nextUrl.pathname.startsWith("/api/protected")) {
+    const authHeader = req?.headers.get("Authorization");
+    if (!authHeader || !checkAPIAuthorization(authHeader)) {
+      return NextResponse.json({}, { status: 401 });
+    }
+
+    const authResult = await checkAPIAuthorization(authHeader);
+
+    if (authResult !== true) {
+      if (typeof authResult == "string") {
+        return NextResponse.json({ message: authResult }, { status: 401 });
+      }
+      return NextResponse.json({}, { status: 401 });
+    }
+
+    return NextResponse.next();
+  }
+
   return NextResponse.next();
 }
 
-// import { NextResponse } from "next/server";
-// import type { NextRequest } from "next/server";
-// import { NextURL } from "next/dist/server/web/next-url";
-// import { compare } from "bcrypt-ts";
-// import jwt from "jsonwebtoken";
-
-// export function middleware(req: NextRequest) {
-//   console.log(`*** middleware:`);
-
-//   const encryptedToken = req.cookies.get("authToken")?.value || "";
-//   console.log(`*** encryptedToken: ${encryptedToken}`);
-
-//   // const { pathname, origin } = req.nextUrl;
-
-//   // // Decrypt the token
-//   // const decryptedToken = CryptoJS.AES.decrypt(
-//   //   encryptedToken,
-//   //   process.env.NEXT_PUBLIC_CRYPTOJS_KEY || ""
-//   // ).toString(CryptoJS.enc.Utf8);
-
-//   // const isTokenValid = decodeToken(decryptedToken);
-
-//   // if (!isTokenValid) {
-//   //   // If the token is invalid and user already on the sign-in page,
-//   //   // redirect to /sign-in
-//   //   if (pathname !== "/sign-in") {
-//   //     const loginUrl = new NextURL("/sign-in", origin);
-//   //     return NextResponse.redirect(loginUrl);
-//   //   }
-//   // } else {
-//   //   // If token is valid and trying to access sign-in, redirect to dashboard
-//   //   if (pathname === "/sign-in") {
-//   //     const dashboardUrl = new NextURL("/dashboard", origin);
-//   //     return NextResponse.redirect(dashboardUrl);
-//   //   }
-
-//   //   // Perform authorization checks
-//   //   const isAuthorized = authorizeUser(userInfo, pathname);
-
-//   //   if (!isAuthorized) {
-//   //     // Handle unauthorized access (e.g., redirect to access denied page)
-//   //     const errorUrl = new NextURL("/access-denied", origin);
-//   //     return NextResponse.redirect(errorUrl);
-//   //   }
-//   // }
-
-//   return NextResponse.next();
-// }
-
-// export const config = {
-//   matcher: [
-//     "/dashboard/:path*", // Protect dashboard route and sub-routes
-//     "/sign-in",
-//     "/",
-//     "/about/:path",
-//     // Add more routes to protect
-//   ],
-// };
-
-// // function to decode token validity
-// function decodeToken(token: string): boolean {
-//   try {
-//     const decodedToken = jwt.decode(token) as jwt.JwtPayload;
-
-//     if (!decodedToken || !decodedToken.exp) {
-//       return false;
-//     }
-
-//     const currentTime = Math.floor(Date.now() / 1000);
-//     return decodedToken.exp > currentTime;
-//   } catch (err) {
-//     console.error("Token decoding error:", err);
-//     return false;
-//   }
-// }
-
-// function authorizeUser(userInfo: any, requestedPath: string): boolean {
-//   // Define roles required for specific paths
-//   const roleRequiredForPath: { [key: string]: string[] } = {
-//     "/dashboard": ["ADMIN"],
-//     // Add more paths and roles as needed
-//   };
-
-//   const rolesRequired = roleRequiredForPath[requestedPath];
-
-//   if (rolesRequired) {
-//     // Check if user has any of the required roles
-//     return rolesRequired.some((role) => userInfo.authorities.includes(role));
-//   }
-
-//   // Default to true if no specific roles are required for the path
-//   return true;
-// }
-
-// function getUserInfoFromToken(token: string) {
-//   const tokenData = jwt.decode(token) as { sub: string; authorities: string[] };
-
-//   return {
-//     email: tokenData?.sub,
-//     authorities: tokenData?.authorities,
-//   };
-// }
-
-// // import { NextResponse } from "next/server";
-// // import type { NextRequest } from "next/server";
-
-// // export function middleware(request: NextRequest) {
-// //   if (request.nextUrl.pathname.startsWith("/manager")) {
-// //     //return NextResponse.rewrite(new URL("/about-2", request.url));
-// //   }
-// // }
+export const config = {
+  matcher: ["/api/protected/:path*", "/manager"],
+};
