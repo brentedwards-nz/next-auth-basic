@@ -3,14 +3,17 @@ import Game from "@/db/models/Game";
 import { Params } from "next/dist/shared/lib/router/utils/route-matcher";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(request: NextRequest, context: { params: Params }) {
-  console.log("GAMES::POST...");
+export async function PUT(request: NextRequest, context: { params: Params }) {
+  console.log("GAMES::PUT...");
 
   try {
-    await connectDb();
-    const game = new Game({});
+    var id = context.params.id;
+    console.log(id);
 
-    await game.save();
+    await connectDb();
+    const game = Game.findOne(id);
+
+    //await game.save();
 
     return NextResponse.json(game, { status: 200 });
   } catch (error) {

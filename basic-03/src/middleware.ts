@@ -5,33 +5,25 @@ import getServerSession from "next-auth";
 import { Payload, VerifyJOSE } from "./utils/tokens";
 
 const checkAPIAuthorization = async (authHeader: string) => {
-  console.log("*** checkAPIAuthorization 1");
   const jwtToken = authHeader.split("Bearer").at(1) || "";
   if (jwtToken?.length === 0) {
     return "Error no access token";
   }
 
   try {
-    console.log("*** checkAPIAuthorization 2");
     const payload = await VerifyJOSE(jwtToken)
       .then((value) => {
-        console.log("*** checkAPIAuthorization 3");
         return value;
       })
       .catch((error) => {
-        console.log("*** checkAPIAuthorization 4");
         return "Error verifying token";
       });
-
-    console.log("*** checkAPIAuthorization 5", payload);
     return true;
     //return payload;
   } catch (error: any) {
     if ("message" in error) {
-      console.log("*** checkAPIAuthorization 6");
       return error.message;
     }
-    console.log("*** checkAPIAuthorization 7");
     return "Error checking API authorization token";
   }
 };
