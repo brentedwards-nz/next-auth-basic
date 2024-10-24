@@ -1,11 +1,13 @@
-import mongoose, { ObjectId } from "mongoose";
+import { ObjectId } from "mongodb";
+import mongoose from "mongoose";
 import { number } from "zod";
 
-interface IGame {
+export interface IGame extends Document {
   startTime: Date;
   endTime: Date;
   // numberOfEnds: number;
-  //participants: [{ type: ObjectId; ref: "User" }];
+  createdBy: [{ type: ObjectId; ref: "User" }];
+  participants: [{ type: ObjectId; ref: "User" }];
 }
 
 const gameSchema = new mongoose.Schema({
@@ -23,9 +25,12 @@ const gameSchema = new mongoose.Schema({
   //   type: number,
   //   required: false,
   // },
-  //participants: [{ type: ObjectId; ref: "User" }]
+  createdBy: { type: ObjectId, ref: "User" },
+  participants: [{ type: ObjectId, ref: "User" }],
 });
 
-const Game = mongoose.model<IGame>("Game", gameSchema);
+// const Game = mongoose.model<IGame>("Game", gameSchema);
 
+// export default Game;
+const Game = mongoose.models.Game || mongoose.model<IGame>("Game", gameSchema);
 export default Game;

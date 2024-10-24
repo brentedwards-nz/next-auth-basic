@@ -30,20 +30,20 @@ const checkAPIAuthorization = async (authHeader: string) => {
 
 export async function middleware(req: NextRequest) {
   if (req.nextUrl.pathname.startsWith("/api/protected")) {
-    const authHeader = req?.headers.get("Authorization");
-    if (!authHeader || !checkAPIAuthorization(authHeader)) {
-      return NextResponse.json({}, { status: 401 });
-    }
+    // const authHeader = req?.headers.get("Authorization");
+    // if (!authHeader || !checkAPIAuthorization(authHeader)) {
+    //   return NextResponse.json({}, { status: 401 });
+    // }
 
-    const authResult = await checkAPIAuthorization(authHeader);
+    // const authResult = await checkAPIAuthorization(authHeader);
 
-    if (authResult !== true) {
-      if (typeof authResult == "string") {
-        return NextResponse.json({ message: authResult }, { status: 401 });
-      }
-      return NextResponse.json({}, { status: 401 });
-    }
-
+    // if (authResult !== true) {
+    //   if (typeof authResult == "string") {
+    //     return NextResponse.json({ message: authResult }, { status: 401 });
+    //   }
+    //   return NextResponse.json({}, { status: 401 });
+    // }
+    console.log("*** middleware:", req.nextUrl.pathname);
     return NextResponse.next();
   }
 

@@ -14,11 +14,8 @@ export async function PUT(request: NextRequest, context: { params: Params }) {
       throw new Error("Could not find game");
     }
 
-    if (game.endTime !== null) {
-      throw new Error("Cannot start game that has finished");
-    }
-
-    game.startTime = new Date();
+    game.startTime = null;
+    game.endTime = null;
     await game.save();
 
     return NextResponse.json(game, { status: 200 });

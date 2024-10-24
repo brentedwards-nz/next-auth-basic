@@ -15,10 +15,10 @@ export async function PUT(request: NextRequest, context: { params: Params }) {
     }
 
     if (game.endTime !== null) {
-      throw new Error("Cannot start game that has finished");
+      throw new Error("Cannot end game that has finished");
     }
 
-    game.startTime = new Date();
+    game.endTime = new Date();
     await game.save();
 
     return NextResponse.json(game, { status: 200 });
